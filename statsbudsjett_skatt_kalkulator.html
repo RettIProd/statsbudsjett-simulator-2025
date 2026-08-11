@@ -1,506 +1,919 @@
 <!doctype html>
 <html lang="no">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hva går skatten din til? – Statsbudsjettet 2026</title>
-  <meta name="description" content="Interaktiv kalkulator som viser hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på statsbudsjettet, og hva budsjettendringer betyr for egen skattebelastning." />
-  <style>
-    :root{
-      --bg:#f5f7f8;
-      --panel:#ffffff;
-      --ink:#14212b;
-      --muted:#62717d;
-      --line:#dbe2e7;
-      --accent:#155f52;
-      --accent-2:#dff2ed;
-      --danger:#a53a33;
-      --danger-bg:#fce8e6;
-      --good:#1f735d;
-      --good-bg:#e0f3ec;
-      --shadow:0 10px 30px rgba(20,33,43,.07);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color:var(--ink);
-      background:
-        radial-gradient(circle at 10% -10%, #e7f4f0 0, transparent 30rem),
-        var(--bg);
-      line-height:1.45;
-    }
-    .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
-    header{padding:28px 0 18px}
-    .eyebrow{
-      display:inline-flex;gap:8px;align-items:center;
-      padding:7px 11px;border:1px solid #cfe3dd;border-radius:999px;
-      background:rgba(255,255,255,.7);font-size:.78rem;font-weight:750;color:#286c5e;
-      letter-spacing:.03em;text-transform:uppercase
-    }
-    h1{font-size:clamp(2.1rem,5vw,4.2rem);line-height:1.02;margin:14px 0 13px;letter-spacing:-.045em;max-width:850px}
-    .lede{font-size:1.08rem;color:var(--muted);max-width:780px;margin:0}
-    .grid{display:grid;gap:16px}
-    .stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:26px}
-    .card{
-      background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-      box-shadow:var(--shadow)
-    }
-    .stat{padding:18px}
-    .stat .label{color:var(--muted);font-size:.82rem;font-weight:650}
-    .stat .value{font-size:1.62rem;font-weight:820;letter-spacing:-.025em;margin-top:5px}
-    .stat .sub{font-size:.78rem;color:var(--muted);margin-top:4px}
-    .section{margin-top:18px;padding:22px}
-    .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
-    h2{font-size:1.35rem;margin:0;letter-spacing:-.02em}
-    .hint{font-size:.87rem;color:var(--muted);max-width:610px;margin:4px 0 0}
-    .controls{grid-template-columns:1.2fr .9fr .9fr}
-    label{font-size:.82rem;font-weight:700;color:#41515c}
-    .input-box{
-      margin-top:7px;border:1px solid var(--line);border-radius:12px;background:#fbfcfc;
-      display:flex;align-items:center;overflow:hidden
-    }
-    .input-box input{border:0;outline:0;background:transparent;width:100%;padding:12px 13px;font:inherit;font-weight:700;color:var(--ink)}
-    .unit{padding:0 13px 0 0;color:var(--muted);font-size:.82rem;white-space:nowrap}
-    .range-line{margin-top:7px}
-    input[type=range]{width:100%;accent-color:var(--accent)}
-    .range-meta{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:3px}
-    button{
-      border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;
-      padding:10px 13px;font:inherit;font-weight:750;cursor:pointer
-    }
-    button:hover{border-color:#aebbc3}
-    .budget-summary{
-      display:grid;grid-template-columns:1.15fr .85fr .85fr .85fr;gap:12px;
-      margin:14px 0 18px
-    }
-    .summary-box{background:#f8fafb;border:1px solid var(--line);border-radius:14px;padding:14px}
-    .summary-box .k{font-size:.74rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-    .summary-box .v{font-size:1.2rem;font-weight:820;margin-top:4px}
-    .good{color:var(--good)} .bad{color:var(--danger)} .neutral{color:var(--ink)}
-    .budget-list{display:grid;gap:10px}
-    .budget-row{
-      padding:15px 16px;border:1px solid var(--line);border-radius:15px;background:#fff;
-      display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(260px,1fr) minmax(150px,.55fr);gap:18px;align-items:center
-    }
-    .budget-name{font-weight:800;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-    .budget-details{font-size:.78rem;color:var(--muted);margin-top:3px}
-    .expand-btn{
-      width:28px;height:28px;padding:0;border-radius:8px;display:inline-grid;place-items:center;
-      font-size:1rem;line-height:1;background:#f5f8f7;border-color:#cfdad6;color:var(--accent)
-    }
-    .expand-btn span{display:block;transition:transform .16s ease}
-    .expand-btn[aria-expanded="true"] span{transform:rotate(90deg)}
-    .other-parent{border-color:#bcd4cc;background:linear-gradient(90deg,#fbfefd,#fff)}
-    .subgroup{
-      margin:-3px 0 4px 24px;padding:6px 0 6px 15px;border-left:2px solid #d6e8e2;
-      display:grid;gap:8px
-    }
-    .budget-row.subrow{
-      box-shadow:none;background:#fbfcfc;border-radius:13px;padding:12px 14px;
-      grid-template-columns:minmax(220px,1.35fr) minmax(260px,1fr) minmax(150px,.55fr)
-    }
-    .subrow .budget-name{font-size:.9rem;font-weight:760}
-    .subrow .budget-details{font-size:.74rem}
-    .subrow .allocation{height:5px}
-    .reconstruction-note{
-      margin:0 0 2px;padding:10px 12px;border:1px dashed #bfd3cc;border-radius:12px;
-      background:#f7fbfa;color:var(--muted);font-size:.76rem
-    }
-    .allocation{margin-top:8px;height:7px;background:#edf1f3;border-radius:10px;overflow:hidden}
-    .allocation > span{display:block;height:100%;background:var(--accent);border-radius:inherit}
-    .slide-wrap{display:grid;grid-template-columns:1fr 62px;gap:10px;align-items:center}
-    .pct{
-      font-variant-numeric:tabular-nums;text-align:right;background:#f5f7f8;border:1px solid var(--line);
-      padding:5px 7px;border-radius:9px;font-size:.78rem;font-weight:780
-    }
-    .impact{text-align:right}
-    .impact strong{display:block;font-size:1rem}
-    .impact span{font-size:.75rem;color:var(--muted)}
-    .impact .chip{
-      display:inline-block;margin-top:4px;padding:3px 7px;border-radius:999px;font-size:.72rem;font-weight:750
-    }
-    .chip.good{background:var(--good-bg)} .chip.bad{background:var(--danger-bg)}
-    .notes{margin-top:18px;padding:18px 20px}
-    .notes p{font-size:.85rem;color:var(--muted);margin:.55em 0}
-    .notes a{color:var(--accent);font-weight:700}
-    .tiny{font-size:.75rem!important}
-    .pill{
-      background:var(--accent-2);color:#1f6b5b;padding:5px 9px;border-radius:999px;
-      font-size:.75rem;font-weight:800;white-space:nowrap
-    }
-    .easter-toast{
-      position:fixed;left:50%;bottom:28px;transform:translate(-50%,18px);
-      z-index:9999;max-width:min(90vw,560px);padding:12px 16px;border-radius:14px;
-      background:#17232c;color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.22);
-      font-weight:800;text-align:center;opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-    }
-    .easter-toast.show{opacity:1;transform:translate(-50%,0)}
-    @media (max-width:900px){
-      .stats{grid-template-columns:repeat(2,1fr)}
-      .controls{grid-template-columns:1fr}
-      .budget-summary{grid-template-columns:repeat(2,1fr)}
-      .budget-row{grid-template-columns:1fr}
-      .impact{text-align:left}
-    }
-    @media (max-width:540px){
-      .wrap{padding:17px 12px 55px}
-      .stats,.budget-summary{grid-template-columns:1fr}
-      .section{padding:16px}
-      h1{font-size:2.35rem}
-    }
-  </style>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Hva går skatten din til? – Statsbudsjettet 2026</title>
+    <meta name="description"
+          content="Interaktiv kalkulator som viser hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på statsbudsjettet, og hva budsjettendringer betyr for egen skattebelastning."/>
+    <style>
+        :root {
+            --bg: #f5f7f8;
+            --panel: #ffffff;
+            --ink: #14212b;
+            --muted: #62717d;
+            --line: #dbe2e7;
+            --accent: #155f52;
+            --accent-2: #dff2ed;
+            --danger: #a53a33;
+            --danger-bg: #fce8e6;
+            --good: #1f735d;
+            --good-bg: #e0f3ec;
+            --shadow: 0 10px 30px rgba(20, 33, 43, .07);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--ink);
+            background: radial-gradient(circle at 10% -10%, #e7f4f0 0, transparent 30rem),
+            var(--bg);
+            line-height: 1.45;
+        }
+
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 26px 20px 70px
+        }
+
+        header {
+            padding: 28px 0 18px
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 7px 11px;
+            border: 1px solid #cfe3dd;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .7);
+            font-size: .78rem;
+            font-weight: 750;
+            color: #286c5e;
+            letter-spacing: .03em;
+            text-transform: uppercase
+        }
+
+        h1 {
+            font-size: clamp(2.1rem, 5vw, 4.2rem);
+            line-height: 1.02;
+            margin: 14px 0 13px;
+            letter-spacing: -.045em;
+            max-width: 850px
+        }
+
+        .lede {
+            font-size: 1.08rem;
+            color: var(--muted);
+            max-width: 780px;
+            margin: 0
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        .stats {
+            grid-template-columns:repeat(4, minmax(0, 1fr));
+            margin-top: 26px
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow)
+        }
+
+        .stat {
+            padding: 18px
+        }
+
+        .stat .label {
+            color: var(--muted);
+            font-size: .82rem;
+            font-weight: 650
+        }
+
+        .stat .value {
+            font-size: 1.62rem;
+            font-weight: 820;
+            letter-spacing: -.025em;
+            margin-top: 5px
+        }
+
+        .stat .sub {
+            font-size: .78rem;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .section {
+            margin-top: 18px;
+            padding: 22px
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            margin: 0;
+            letter-spacing: -.02em
+        }
+
+        .hint {
+            font-size: .87rem;
+            color: var(--muted);
+            max-width: 610px;
+            margin: 4px 0 0
+        }
+
+        .controls {
+            grid-template-columns:1.2fr .9fr .9fr
+        }
+
+        label {
+            font-size: .82rem;
+            font-weight: 700;
+            color: #41515c
+        }
+
+        .input-box {
+            margin-top: 7px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fbfcfc;
+            display: flex;
+            align-items: center;
+            overflow: hidden
+        }
+
+        .input-box input {
+            border: 0;
+            outline: 0;
+            background: transparent;
+            width: 100%;
+            padding: 12px 13px;
+            font: inherit;
+            font-weight: 700;
+            color: var(--ink)
+        }
+
+        .unit {
+            padding: 0 13px 0 0;
+            color: var(--muted);
+            font-size: .82rem;
+            white-space: nowrap
+        }
+
+        .range-line {
+            margin-top: 7px
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent)
+        }
+
+        .range-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: 3px
+        }
+
+        button {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            border-radius: 11px;
+            padding: 10px 13px;
+            font: inherit;
+            font-weight: 750;
+            cursor: pointer
+        }
+
+        button:hover {
+            border-color: #aebbc3
+        }
+
+        .budget-summary {
+            display: grid;
+            grid-template-columns:1.15fr .85fr .85fr .85fr;
+            gap: 12px;
+            margin: 14px 0 18px
+        }
+
+        .summary-box {
+            background: #f8fafb;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px
+        }
+
+        .summary-box .k {
+            font-size: .74rem;
+            color: var(--muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em
+        }
+
+        .summary-box .v {
+            font-size: 1.2rem;
+            font-weight: 820;
+            margin-top: 4px
+        }
+
+        .good {
+            color: var(--good)
+        }
+
+        .bad {
+            color: var(--danger)
+        }
+
+        .neutral {
+            color: var(--ink)
+        }
+
+        .budget-list {
+            display: grid;
+            gap: 10px
+        }
+
+        .budget-row {
+            padding: 15px 16px;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            background: #fff;
+            display: grid;
+            grid-template-columns:minmax(220px, 1.35fr) minmax(260px, 1fr) minmax(150px, .55fr);
+            gap: 18px;
+            align-items: center
+        }
+
+        .budget-name {
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-wrap: wrap
+        }
+
+        .budget-details {
+            font-size: .78rem;
+            color: var(--muted);
+            margin-top: 3px
+        }
+
+        .expand-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 8px;
+            display: inline-grid;
+            place-items: center;
+            font-size: 1rem;
+            line-height: 1;
+            background: #f5f8f7;
+            border-color: #cfdad6;
+            color: var(--accent)
+        }
+
+        .expand-btn span {
+            display: block;
+            transition: transform .16s ease
+        }
+
+        .expand-btn[aria-expanded="true"] span {
+            transform: rotate(90deg)
+        }
+
+        .other-parent {
+            border-color: #bcd4cc;
+            background: linear-gradient(90deg, #fbfefd, #fff)
+        }
+
+        .subgroup {
+            margin: -3px 0 4px 24px;
+            padding: 6px 0 6px 15px;
+            border-left: 2px solid #d6e8e2;
+            display: grid;
+            gap: 8px
+        }
+
+        .budget-row.subrow {
+            box-shadow: none;
+            background: #fbfcfc;
+            border-radius: 13px;
+            padding: 12px 14px;
+            grid-template-columns:minmax(220px, 1.35fr) minmax(260px, 1fr) minmax(150px, .55fr)
+        }
+
+        .subrow .budget-name {
+            font-size: .9rem;
+            font-weight: 760
+        }
+
+        .subrow .budget-details {
+            font-size: .74rem
+        }
+
+        .subrow .allocation {
+            height: 5px
+        }
+
+        .reconstruction-note {
+            margin: 0 0 2px;
+            padding: 10px 12px;
+            border: 1px dashed #bfd3cc;
+            border-radius: 12px;
+            background: #f7fbfa;
+            color: var(--muted);
+            font-size: .76rem
+        }
+
+        .allocation {
+            margin-top: 8px;
+            height: 7px;
+            background: #edf1f3;
+            border-radius: 10px;
+            overflow: hidden
+        }
+
+        .allocation > span {
+            display: block;
+            height: 100%;
+            background: var(--accent);
+            border-radius: inherit
+        }
+
+        .slide-wrap {
+            display: grid;
+            grid-template-columns:1fr 62px;
+            gap: 10px;
+            align-items: center
+        }
+
+        .pct {
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            background: #f5f7f8;
+            border: 1px solid var(--line);
+            padding: 5px 7px;
+            border-radius: 9px;
+            font-size: .78rem;
+            font-weight: 780
+        }
+
+        .impact {
+            text-align: right
+        }
+
+        .impact strong {
+            display: block;
+            font-size: 1rem
+        }
+
+        .impact span {
+            font-size: .75rem;
+            color: var(--muted)
+        }
+
+        .impact .chip {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 750
+        }
+
+        .chip.good {
+            background: var(--good-bg)
+        }
+
+        .chip.bad {
+            background: var(--danger-bg)
+        }
+
+        .notes {
+            margin-top: 18px;
+            padding: 18px 20px
+        }
+
+        .notes p {
+            font-size: .85rem;
+            color: var(--muted);
+            margin: .55em 0
+        }
+
+        .notes a {
+            color: var(--accent);
+            font-weight: 700
+        }
+
+        .tiny {
+            font-size: .75rem !important
+        }
+
+        .pill {
+            background: var(--accent-2);
+            color: #1f6b5b;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: .75rem;
+            font-weight: 800;
+            white-space: nowrap
+        }
+
+        .easter-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            transform: translate(-50%, 18px);
+            z-index: 9999;
+            max-width: min(90vw, 560px);
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: #17232c;
+            color: #fff;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, .22);
+            font-weight: 800;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+
+        .easter-toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0)
+        }
+
+        @media (max-width: 900px) {
+            .stats {
+                grid-template-columns:repeat(2, 1fr)
+            }
+
+            .controls {
+                grid-template-columns:1fr
+            }
+
+            .budget-summary {
+                grid-template-columns:repeat(2, 1fr)
+            }
+
+            .budget-row {
+                grid-template-columns:1fr
+            }
+
+            .impact {
+                text-align: left
+            }
+        }
+
+        @media (max-width: 540px) {
+            .wrap {
+                padding: 17px 12px 55px
+            }
+
+            .stats, .budget-summary {
+                grid-template-columns:1fr
+            }
+
+            .section {
+                padding: 16px
+            }
+
+            h1 {
+                font-size: 2.35rem
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="eyebrow">Norge · Statsbudsjettet 2026</div>
-    <h1>Hva går skatten din til?</h1>
-    <p class="lede">Se hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på staten – og dra i budsjettpostene for å se hva høyere eller lavere pengebruk ville bety for din egen skattebelastning.</p>
-  </header>
+    <header>
+        <div class="eyebrow">Norge · Statsbudsjettet 2026</div>
+        <h1>Hva går skatten din til?</h1>
+        <p class="lede">Se hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på staten – og dra i
+            budsjettpostene for å se hva høyere eller lavere pengebruk ville bety for din egen skattebelastning.</p>
+    </header>
 
-  <section class="grid stats">
-    <div class="card stat">
-      <div class="label">Årslønn</div>
-      <div class="value" id="grossStat">744 840 kr</div>
-      <div class="sub">SSB-snitt 2025 som utgangspunkt</div>
-    </div>
-    <div class="card stat">
-      <div class="label" id="incomeTaxLabel">Anslått inntektsskatt</div>
-      <div class="value" id="incomeTaxStat">–</div>
-      <div class="sub" id="incomeTaxSub">Inkl. trygdeavgift og trinnskatt, justert for budsjettendringer</div>
-    </div>
-    <div class="card stat">
-      <div class="label">Anslått moms</div>
-      <div class="value" id="vatStat">–</div>
-      <div class="sub">Avhengig av forbruksforutsetning</div>
-    </div>
-    <div class="card stat">
-      <div class="label">Samlet modellert skatt</div>
-      <div class="value" id="totalTaxStat">–</div>
-      <div class="sub" id="taxRateStat">–</div>
-    </div>
-  </section>
+    <section class="grid stats">
+        <div class="card stat">
+            <div class="label">Årslønn</div>
+            <div class="value" id="grossStat">744 840 kr</div>
+            <div class="sub">SSB-snitt 2025 som utgangspunkt</div>
+        </div>
+        <div class="card stat">
+            <div class="label" id="incomeTaxLabel">Anslått inntektsskatt</div>
+            <div class="value" id="incomeTaxStat">–</div>
+            <div class="sub" id="incomeTaxSub">Inkl. trygdeavgift og trinnskatt, justert for budsjettendringer</div>
+        </div>
+        <div class="card stat">
+            <div class="label">Anslått moms</div>
+            <div class="value" id="vatStat">–</div>
+            <div class="sub">Avhengig av forbruksforutsetning</div>
+        </div>
+        <div class="card stat">
+            <div class="label">Samlet modellert skatt</div>
+            <div class="value" id="totalTaxStat">–</div>
+            <div class="sub" id="taxRateStat">–</div>
+        </div>
+    </section>
 
-  <section class="card section">
-    <div class="section-head">
-      <div>
-        <h2>1. Borgeren</h2>
-        <p class="hint">Standardpersonen har SSBs gjennomsnittlige månedslønn for 2025: 62 070 kr. Skatten beregnes forenklet etter vedtatte 2026-satser, uten individuelle fradrag utover person- og minstefradrag.</p>
-      </div>
-      <button id="resetPerson">Bruk gjennomsnitt</button>
-    </div>
-    <div class="grid controls">
-      <div>
-        <label for="salary">Brutto årslønn</label>
-        <div class="input-box"><input id="salary" type="number" min="0" step="1000" value="744840"><span class="unit">kr/år</span></div>
-      </div>
-      <div>
-        <label for="vatRate">Gjennomsnittlig moms-sats på kjøp: <span id="vatRateOut">18 %</span></label>
-        <div class="range-line"><input id="vatRate" type="range" min="0" max="25" step="0.5" value="18"></div>
-        <div class="range-meta"><span>0 %</span><span>25 %</span></div>
-      </div>
-      <div>
-        <label for="consumption">Netto lønn brukt på momspliktig forbruk: <span id="consumptionOut">90 %</span></label>
-        <div class="range-line"><input id="consumption" type="range" min="0" max="100" step="1" value="90"></div>
-        <div class="range-meta"><span>0 %</span><span>100 %</span></div>
-      </div>
-    </div>
-    <p class="hint" style="margin-top:14px">Moms beregnes fra prisen du faktisk betaler: ved 25 % moms utgjør avgiften 20 % av en pris inklusive moms. Norge har i 2026 ordinær sats 25 %, redusert sats 15 % og lav sats 12 %.</p>
-  </section>
+    <section class="card section">
+        <div class="section-head">
+            <div>
+                <h2>1. Borgeren</h2>
+                <p class="hint">Standardpersonen har SSBs gjennomsnittlige månedslønn for 2025: 62 070 kr. Skatten
+                    beregnes forenklet etter vedtatte 2026-satser, uten individuelle fradrag utover person- og
+                    minstefradrag.</p>
+            </div>
+            <button id="resetPerson">Bruk gjennomsnitt</button>
+        </div>
+        <div class="grid controls">
+            <div>
+                <label for="salary">Brutto årslønn</label>
+                <div class="input-box"><input id="salary" type="number" min="0" step="1000" value="744840"><span
+                        class="unit">kr/år</span></div>
+            </div>
+            <div>
+                <label for="vatRate">Gjennomsnittlig moms-sats på kjøp: <span id="vatRateOut">18 %</span></label>
+                <div class="range-line"><input id="vatRate" type="range" min="0" max="25" step="0.5" value="18"></div>
+                <div class="range-meta"><span>0 %</span><span>25 %</span></div>
+            </div>
+            <div>
+                <label for="consumption">Netto lønn brukt på momspliktig forbruk: <span id="consumptionOut">90 %</span></label>
+                <div class="range-line"><input id="consumption" type="range" min="0" max="100" step="1" value="90">
+                </div>
+                <div class="range-meta"><span>0 %</span><span>100 %</span></div>
+            </div>
+        </div>
+        <p class="hint" style="margin-top:14px">Moms beregnes fra prisen du faktisk betaler: ved 25 % moms utgjør
+            avgiften 20 % av en pris inklusive moms. Norge har i 2026 ordinær sats 25 %, redusert sats 15 % og lav sats
+            12 %.</p>
+    </section>
 
-  <section class="card section">
-    <div class="section-head">
-      <div>
-        <h2>2. Statsbudsjettet</h2>
-        <p class="hint">Hver rad starter på 100 %. Flytt slideren ned for kutt eller opp for økt bevilgning. «Din effekt» fordeler budsjettendringen etter borgerens modellerte skattebidrag (inntektsskatt + moms) og legger kroneeffekten til eller trekker den fra inntektsskatten. Hvis besparelsen overstiger inntektsskatten, vises overskytende beløp som «Borgerutbytte».</p>
-      </div>
-      <button id="resetBudget">Nullstill budsjett</button>
-    </div>
+    <section class="card section">
+        <div class="section-head">
+            <div>
+                <h2>2. Statsbudsjettet</h2>
+                <p class="hint">Hver rad starter på 100 %. Flytt slideren ned for kutt eller opp for økt bevilgning.
+                    «Din effekt» fordeler budsjettendringen etter borgerens modellerte skattebidrag (inntektsskatt +
+                    moms) og legger kroneeffekten til eller trekker den fra inntektsskatten. Hvis besparelsen overstiger
+                    inntektsskatten, vises overskytende beløp som «Borgerutbytte».</p>
+            </div>
+            <button id="resetBudget">Nullstill budsjett</button>
+        </div>
 
-    <div class="budget-summary">
-      <div class="summary-box">
-        <div class="k">Budsjettgrunnlag</div>
-        <div class="v">2 164,5 mrd.</div>
-      </div>
-      <div class="summary-box">
-        <div class="k">Netto budsjettendring</div>
-        <div class="v neutral" id="budgetDelta">0 kr</div>
-      </div>
-      <div class="summary-box">
-        <div class="k">Din effekt / år</div>
-        <div class="v neutral" id="citizenDeltaYear">0 kr</div>
-      </div>
-      <div class="summary-box">
-        <div class="k">Din effekt / måned</div>
-        <div class="v neutral" id="citizenDeltaMonth">0 kr</div>
-      </div>
-    </div>
+        <div class="budget-summary">
+            <div class="summary-box">
+                <div class="k">Budsjettgrunnlag</div>
+                <div class="v">2 164,5 mrd.</div>
+            </div>
+            <div class="summary-box">
+                <div class="k">Netto budsjettendring</div>
+                <div class="v neutral" id="budgetDelta">0 kr</div>
+            </div>
+            <div class="summary-box">
+                <div class="k">Din effekt / år</div>
+                <div class="v neutral" id="citizenDeltaYear">0 kr</div>
+            </div>
+            <div class="summary-box">
+                <div class="k">Din effekt / måned</div>
+                <div class="v neutral" id="citizenDeltaMonth">0 kr</div>
+            </div>
+        </div>
 
-    <div class="budget-list" id="budgetList"></div>
-  </section>
+        <div class="budget-list" id="budgetList"></div>
+    </section>
 
-  <section class="card notes">
-    <div class="section-head" style="margin-bottom:5px">
-      <h2>Forutsetninger og kilder</h2>
-      <span class="pill">Illustrativ modell</span>
-    </div>
-    <p>Utgiftspostene følger Finansdepartementets 2026-oversikt over statsbudsjettet uten petroleumsvirksomhet og lånetransaksjoner. «Andre utgifter» er uttrykkelig definert av Finansdepartementet som en residualkategori. Underfordelingen som vises når raden utvides er derfor rekonstruert fra Gul boks departements-, programområde- og programposttabeller. De største dokumenterbare gruppene er skilt ut, mens resten ligger i «Annet».</p>
-    <p>SSB oppgir gjennomsnittlig månedslønn i 2025 til 62 070 kr. Skatteberegningen bruker vedtatte 2026-satser: 22 % skatt på alminnelig inntekt, 7,6 % trygdeavgift, personfradrag 114 540 kr, minstefradrag 46 % / maks 95 700 kr og gjeldende trinnskatt.</p>
-    <p>Moms er ikke lik 25 % av beløpet i kassen: en vare til 125 kr med 25 % moms inneholder 25 kr moms, altså 20 % av sluttprisen. Derfor beregnes moms her som <em>sats / (100 + sats)</em> av den delen av nettoinntekten som antas brukt på momspliktig forbruk.</p>
-    <p class="tiny">
-      Kilder:
-      <a href="https://www.regjeringen.no/no/statsbudsjett/2026/statsbudsjettet-2026-statens-inntekter-og-utgifter/id3123348/" target="_blank" rel="noreferrer">Finansdepartementet – statsbudsjettet 2026</a> ·
-      <a href="https://www.regjeringen.no/no/tema/okonomi-og-budsjett/skatter-og-avgifter/skatte-og-avgiftssatser/skattesatser-2026/id3121978/" target="_blank" rel="noreferrer">skattesatser 2026</a> ·
-      <a href="https://www.ssb.no/arbeid-og-lonn/lonn-og-arbeidskraftkostnader/statistikk/lonn" target="_blank" rel="noreferrer">SSB – lønn</a> ·
-      <a href="https://www.skatteetaten.no/satser/merverdiavgift/" target="_blank" rel="noreferrer">Skatteetaten – merverdiavgift</a>.
-    </p>
-  </section>
+    <section class="card notes">
+        <div class="section-head" style="margin-bottom:5px">
+            <h2>Forutsetninger og kilder</h2>
+            <span class="pill">Illustrativ modell</span>
+        </div>
+        <p>Utgiftspostene følger Finansdepartementets 2026-oversikt over statsbudsjettet uten petroleumsvirksomhet og
+            lånetransaksjoner. «Andre utgifter» er uttrykkelig definert av Finansdepartementet som en residualkategori.
+            Underfordelingen som vises når raden utvides er derfor rekonstruert fra Gul boks departements-,
+            programområde- og programposttabeller. De største dokumenterbare gruppene er skilt ut, mens resten ligger i
+            «Annet».</p>
+        <p>SSB oppgir gjennomsnittlig månedslønn i 2025 til 62 070 kr. Skatteberegningen bruker vedtatte 2026-satser: 22
+            % skatt på alminnelig inntekt, 7,6 % trygdeavgift, personfradrag 114 540 kr, minstefradrag 46 % / maks 95
+            700 kr og gjeldende trinnskatt.</p>
+        <p>Moms er ikke lik 25 % av beløpet i kassen: en vare til 125 kr med 25 % moms inneholder 25 kr moms, altså 20 %
+            av sluttprisen. Derfor beregnes moms her som <em>sats / (100 + sats)</em> av den delen av nettoinntekten som
+            antas brukt på momspliktig forbruk.</p>
+        <p class="tiny">
+            Kilder:
+            <a href="https://www.regjeringen.no/no/statsbudsjett/2026/statsbudsjettet-2026-statens-inntekter-og-utgifter/id3123348/"
+               target="_blank" rel="noreferrer">Finansdepartementet – statsbudsjettet 2026</a> ·
+            <a href="https://www.regjeringen.no/no/tema/okonomi-og-budsjett/skatter-og-avgifter/skatte-og-avgiftssatser/skattesatser-2026/id3121978/"
+               target="_blank" rel="noreferrer">skattesatser 2026</a> ·
+            <a href="https://www.ssb.no/arbeid-og-lonn/lonn-og-arbeidskraftkostnader/statistikk/lonn" target="_blank"
+               rel="noreferrer">SSB – lønn</a> ·
+            <a href="https://www.skatteetaten.no/satser/merverdiavgift/" target="_blank" rel="noreferrer">Skatteetaten –
+                merverdiavgift</a>.
+        </p>
+    </section>
 </div>
 <div id="easterToast" class="easter-toast" role="status" aria-live="polite"></div>
 
 <script>
-const BASE_TOTAL = 2164.5; // mrd. kroner
-const AVG_SALARY = 62070 * 12;
+    const BASE_TOTAL = 2164.5; // mrd. kroner
+    const AVG_SALARY = 62070 * 12;
 
-const otherChildrenBase = [
-  {name:"MVA-kompensasjon og statlig MVA-nettoordning", amount:47.951,
-   note:"Kompensasjon til kommuner/private + nettoordning for statlig betalt MVA"},
-  {name:"Arbeid, NAV, integrering og Statens pensjonskasse", amount:73.970,
-   note:"Ordinære utgifter utenom folketrygdens ytelser"},
-  {name:"Utdanningsfinansiering / Lånekassen", amount:21.403,
-   note:"Ordinære utgifter før lånetransaksjoner"},
-  {name:"Grunnopplæring", amount:16.566,
-   note:"Statlige bevilgninger til grunnopplæringen; kommunal skole finansieres også lokalt"},
-  {name:"Kultur, medier, frivillighet og likestilling", amount:27.039,
-   note:"Hele programområdet under Kultur- og likestillingsdepartementet"},
-  {name:"Justis, beredskap og innvandring – uten politi/påtalemyndighet", amount:28.567,
-   note:"Bl.a. kriminalomsorg, domstoler, redning/beredskap og utlendingsforvaltning"},
-  {name:"Helse og omsorg – uten RHF og folketrygden", amount:20.266,
-   note:"Bl.a. kommunehelse, sentral helseforvaltning, folkehelse og tannhelse"},
-  {name:"Barn og familie – uten barnetrygd/kontantstøtte", amount:20.287,
-   note:"Bl.a. barnevern, tros- og livssynssamfunn og forbrukerpolitikk"},
-  {name:"Næring og fiskeri", amount:22.848,
-   note:"Ordinære utgifter uten lånetransaksjoner"},
-  {name:"Energi, strømstøtte, Langskip m.m.", amount:20.451,
-   note:"Energidepartementets ordinære budsjett"},
-  {name:"Digitalisering og statlig forvaltning", amount:17.676,
-   note:"Ordinære utgifter uten lånetransaksjoner"},
-  {name:"Skatte-, toll- og finansadministrasjon", amount:15.609,
-   note:"Skatteetaten, Tolletaten, Finansdepartementet, DFØ og SSB – MVA-ordninger holdt separat"},
-  {name:"Enova og CO₂-kompensasjon til industrien", amount:14.500,
-   note:"To store, dokumenterte klima-/miljøposter (omtrent 7,2 + 7,3 mrd.)"},
-  {name:"Bolig, bomiljø, bygg og plan/geodata", amount:6.888,
-   note:"Utvalgte store poster under Kommunal- og distriktsdepartementet"},
-  {name:"Ymse / uforutsette utgifter", amount:6.300,
-   note:"Motpost til bl.a. lønnsoppgjør og andre uforutsette utgifter"}
-];
+    const otherChildrenBase = [
+        {
+            name: "MVA-kompensasjon og statlig MVA-nettoordning", amount: 47.951,
+            note: "Kompensasjon til kommuner/private + nettoordning for statlig betalt MVA"
+        },
+        {
+            name: "Arbeid, NAV, integrering og Statens pensjonskasse", amount: 73.970,
+            note: "Ordinære utgifter utenom folketrygdens ytelser"
+        },
+        {
+            name: "Utdanningsfinansiering / Lånekassen", amount: 21.403,
+            note: "Ordinære utgifter før lånetransaksjoner"
+        },
+        {
+            name: "Grunnopplæring", amount: 16.566,
+            note: "Statlige bevilgninger til grunnopplæringen; kommunal skole finansieres også lokalt"
+        },
+        {
+            name: "Kultur, medier, frivillighet og likestilling", amount: 27.039,
+            note: "Hele programområdet under Kultur- og likestillingsdepartementet"
+        },
+        {
+            name: "Justis, beredskap og innvandring – uten politi/påtalemyndighet", amount: 28.567,
+            note: "Bl.a. kriminalomsorg, domstoler, redning/beredskap og utlendingsforvaltning"
+        },
+        {
+            name: "Helse og omsorg – uten RHF og folketrygden", amount: 20.266,
+            note: "Bl.a. kommunehelse, sentral helseforvaltning, folkehelse og tannhelse"
+        },
+        {
+            name: "Barn og familie – uten barnetrygd/kontantstøtte", amount: 20.287,
+            note: "Bl.a. barnevern, tros- og livssynssamfunn og forbrukerpolitikk"
+        },
+        {
+            name: "Næring og fiskeri", amount: 22.848,
+            note: "Ordinære utgifter uten lånetransaksjoner"
+        },
+        {
+            name: "Energi, strømstøtte, Langskip m.m.", amount: 20.451,
+            note: "Energidepartementets ordinære budsjett"
+        },
+        {
+            name: "Digitalisering og statlig forvaltning", amount: 17.676,
+            note: "Ordinære utgifter uten lånetransaksjoner"
+        },
+        {
+            name: "Skatte-, toll- og finansadministrasjon", amount: 15.609,
+            note: "Skatteetaten, Tolletaten, Finansdepartementet, DFØ og SSB – MVA-ordninger holdt separat"
+        },
+        {
+            name: "Enova og CO₂-kompensasjon til industrien", amount: 14.500,
+            note: "To store, dokumenterte klima-/miljøposter (omtrent 7,2 + 7,3 mrd.)"
+        },
+        {
+            name: "Bolig, bomiljø, bygg og plan/geodata", amount: 6.888,
+            note: "Utvalgte store poster under Kommunal- og distriktsdepartementet"
+        },
+        {
+            name: "Ymse / uforutsette utgifter", amount: 6.300,
+            note: "Motpost til bl.a. lønnsoppgjør og andre uforutsette utgifter"
+        }
+    ];
 
-const knownOther = otherChildrenBase.reduce((s,x)=>s+x.amount,0);
-const otherChildren = [
-  ...otherChildrenBase,
-  {name:"Annet", amount:Math.max(0, 414.7-knownOther),
-   note:"Resterende residual, inkl. mindre poster, avrundinger og områder som ikke er skilt sikkert ut"}
-].map((x,i)=>({...x,id:`other-${i}`,level:100}));
+    const knownOther = otherChildrenBase.reduce((s, x) => s + x.amount, 0);
+    const otherChildren = [
+        ...otherChildrenBase,
+        {
+            name: "Annet", amount: Math.max(0, 414.7 - knownOther),
+            note: "Resterende residual, inkl. mindre poster, avrundinger og områder som ikke er skilt sikkert ut"
+        }
+    ].map((x, i) => ({...x, id: `other-${i}`, level: 100}));
 
-let otherExpanded = false;
+    let otherExpanded = false;
 
-const categories = [
-  {name:"Andre utgifter", amount:414.7, expandable:true, children:otherChildren},
-  {name:"Alderspensjon", amount:352.1},
-  {name:"Rammetilskudd til kommuner og fylkeskommuner", amount:259.0},
-  {name:"Regionale helseforetak", amount:237.1},
-  {name:"Forsvar", amount:179.8},
-  {name:"Uføretrygd", amount:140.7},
-  {name:"Samferdsel", amount:98.1},
-  {name:"Sykepenger", amount:74.9},
-  {name:"Høyere utdanning, forskning og fagskoler", amount:65.0},
-  {name:"Arbeidsavklaringspenger", amount:56.6},
-  {name:"Bistand", amount:54.2},
-  {name:"Helsetjenester i folketrygden", amount:47.9},
-  {name:"Politi og påtalemyndighet", amount:31.9},
-  {name:"Foreldrepenger m.m.", amount:31.4},
-  {name:"Barnetrygd og kontantstøtte", amount:30.4},
-  {name:"Jordbruksavtalen", amount:30.1},
-  {name:"Øvrige sosiale formål", amount:22.3},
-  {name:"Renter på statsgjeld", amount:20.1},
-  {name:"Arbeidsliv", amount:18.1}
-].map((x,i)=>({...x,id:i,level:100}));
+    const categories = [
+        {name: "Andre utgifter", amount: 414.7, expandable: true, children: otherChildren},
+        {name: "Alderspensjon", amount: 352.1},
+        {name: "Rammetilskudd til kommuner og fylkeskommuner", amount: 259.0},
+        {name: "Regionale helseforetak", amount: 237.1},
+        {name: "Forsvar", amount: 179.8},
+        {name: "Uføretrygd", amount: 140.7},
+        {name: "Samferdsel", amount: 98.1},
+        {name: "Sykepenger", amount: 74.9},
+        {name: "Høyere utdanning, forskning og fagskoler", amount: 65.0},
+        {name: "Arbeidsavklaringspenger", amount: 56.6},
+        {name: "Bistand", amount: 54.2},
+        {name: "Helsetjenester i folketrygden", amount: 47.9},
+        {name: "Politi og påtalemyndighet", amount: 31.9},
+        {name: "Foreldrepenger m.m.", amount: 31.4},
+        {name: "Barnetrygd og kontantstøtte", amount: 30.4},
+        {name: "Jordbruksavtalen", amount: 30.1},
+        {name: "Øvrige sosiale formål", amount: 22.3},
+        {name: "Renter på statsgjeld", amount: 20.1},
+        {name: "Arbeidsliv", amount: 18.1}
+    ].map((x, i) => ({...x, id: i, level: 100}));
 
 
-// ------------------------------------------------------------
-// EASTER EGGS
-// Legg til eller endre meldinger her.
-// Nøkkelen må være nøyaktig samme navn som budsjettposten.
-// Bruk 0 for helt kutt og 200 for dobling.
-// Eksempel:
-// "Forsvar": { 0:"...", 200:"..." },
-// ------------------------------------------------------------
-const easterEggs = {
-  "Alderspensjon": {
-    0: "Sorry Boomer, Day of the Pillow",
-    200: "Cronus gjorde ingenting galt! 🪐(♄)"
-  },
-  "Forsvar": {
-    0: "Dette har vi NATO til.",
-    200: "Til Valhall!"
-  },
-  "Bistand": {
-    0: "Basert og Rødpillet",
-    200: "Verdens Rikeste Land™ har råd!"
-  },
-  "Renter på statsgjeld": {
-    0: "Gratis penger! Hva kan gå galt?",
-    200: "Slaveri bygde tross alt pyramidene."
-  },
-  "Politi og påtalemyndighet": {
-    0: "Borgervern er billigere og henlegger ikke alt uansett!",
-    200: "🍔🦅🇺🇸💲🗽"
-  },
-  "Arbeid, NAV, integrering og Statens pensjonskasse": {
-    0: "Integrer dere selv, latsabber!",
-    200: "Enten gå på nav eller jobb på nav!"
-  },
-  "Uføretrygd": {
-    0: "Vondt i ryggen? Vondt i vilja!",
-    200: "Kan man kalle det et verdig liv uten Ferrari?"
-  },
-  "Sykepenger": {
-    0: "Ta deg en paracet.",
-    200: "Hjemme grunnet syk gullfisk."
-  },
-  "Høyere utdanning, forskning og fagskoler": {
-    0: "Når var sist Tverrfaglige Kjønnsstudier bygde en bro?",
-    200: "Jeg ble lovet svevebrett i 2015! Hvor er de!?"
-  },
-  "Kultur, medier, frivillighet og likestilling": {
-    0: "Ta den, Sosialister!",
-    200: "Frivillighet er ikke frivillig!"
-  }
-};
+    // ------------------------------------------------------------
+    // EASTER EGGS
+    // Legg til eller endre meldinger her.
+    // Nøkkelen må være nøyaktig samme navn som budsjettposten.
+    // Bruk 0 for helt kutt og 200 for dobling.
+    // Eksempel:
+    // "Forsvar": { 0:"...", 200:"..." },
+    // ------------------------------------------------------------
+    const easterEggs = {
+        "Alderspensjon": {
+            0: "Sorry Boomer, Day of the Pillow",
+            200: "Cronus gjorde ingenting galt! 🪐(♄)"
+        },
+        "Forsvar": {
+            0: "Dette har vi NATO til.",
+            200: "Til Valhall!"
+        },
+        "Bistand": {
+            0: "Basert og Rødpillet",
+            200: "Verdens Rikeste Land™ har råd!"
+        },
+        "Renter på statsgjeld": {
+            0: "Gratis penger! Hva kan gå galt?",
+            200: "Slaveri bygde tross alt pyramidene."
+        },
+        "Politi og påtalemyndighet": {
+            0: "Borgervern er billigere og henlegger ikke alt uansett!",
+            200: "🍔🦅🇺🇸💲🗽"
+        },
+        "Arbeid, NAV, integrering og Statens pensjonskasse": {
+            0: "Integrer dere selv, latsabber!",
+            200: "Enten gå på nav eller jobb på nav!"
+        },
+        "Uføretrygd": {
+            0: "Vondt i ryggen? Vondt i vilja!",
+            200: "Kan man kalle det et verdig liv uten Ferrari?"
+        },
+        "Sykepenger": {
+            0: "Ta deg en paracet.",
+            200: "Hjemme grunnet syk gullfisk."
+        },
+        "Høyere utdanning, forskning og fagskoler": {
+            0: "Når var sist Tverrfaglige Kjønnsstudier bygde en bro?",
+            200: "Jeg ble lovet svevebrett i 2015! Hvor er de!?"
+        },
+        "Kultur, medier, frivillighet og likestilling": {
+            0: "Ta den, Sosialister!",
+            200: "Frivillighet er ikke frivillig!"
+        }
+    };
 
-let easterToastTimer = null;
-const easterEggState = new Map();
+    let easterToastTimer = null;
+    const easterEggState = new Map();
 
-function maybeShowEasterEgg(name, level){
-  const messages = easterEggs[name];
-  if(!messages) return;
+    function maybeShowEasterEgg(name, level) {
+        const messages = easterEggs[name];
+        if (!messages) return;
 
-  const endpoint = (level === 0 || level === 200) ? level : null;
-  const previous = easterEggState.get(name);
+        const endpoint = (level === 0 || level === 200) ? level : null;
+        const previous = easterEggState.get(name);
 
-  // Når slideren forlater endepunktet, "armeres" egget igjen.
-  if(endpoint === null){
-    easterEggState.delete(name);
-    return;
-  }
+        // Når slideren forlater endepunktet, "armeres" egget igjen.
+        if (endpoint === null) {
+            easterEggState.delete(name);
+            return;
+        }
 
-  if(previous === endpoint) return;
+        if (previous === endpoint) return;
 
-  const message = messages[endpoint];
-  if(!message) return;
+        const message = messages[endpoint];
+        if (!message) return;
 
-  easterEggState.set(name, endpoint);
+        easterEggState.set(name, endpoint);
 
-  const toast = document.getElementById("easterToast");
-  toast.textContent = message;
-  toast.classList.add("show");
+        const toast = document.getElementById("easterToast");
+        toast.textContent = message;
+        toast.classList.add("show");
 
-  clearTimeout(easterToastTimer);
-  easterToastTimer = setTimeout(()=>{
-    toast.classList.remove("show");
-  }, 2600);
-}
+        clearTimeout(easterToastTimer);
+        easterToastTimer = setTimeout(() => {
+            toast.classList.remove("show");
+        }, 2600);
+    }
 
-const nf0 = new Intl.NumberFormat("nb-NO",{maximumFractionDigits:0});
-const nf1 = new Intl.NumberFormat("nb-NO",{minimumFractionDigits:1,maximumFractionDigits:1});
-const pct1 = new Intl.NumberFormat("nb-NO",{minimumFractionDigits:1,maximumFractionDigits:1});
+    const nf0 = new Intl.NumberFormat("nb-NO", {maximumFractionDigits: 0});
+    const nf1 = new Intl.NumberFormat("nb-NO", {minimumFractionDigits: 1, maximumFractionDigits: 1});
+    const pct1 = new Intl.NumberFormat("nb-NO", {minimumFractionDigits: 1, maximumFractionDigits: 1});
 
-const salaryEl = document.getElementById("salary");
-const vatRateEl = document.getElementById("vatRate");
-const consEl = document.getElementById("consumption");
+    const salaryEl = document.getElementById("salary");
+    const vatRateEl = document.getElementById("vatRate");
+    const consEl = document.getElementById("consumption");
 
-function trinnTax(income){
-  const steps = [
-    [226100,318300,0.017],
-    [318300,725050,0.040],
-    [725050,980100,0.137],
-    [980100,1467200,0.168],
-    [1467200,Infinity,0.178]
-  ];
-  let tax=0;
-  for(const [lo,hi,rate] of steps){
-    if(income>lo) tax += Math.max(0, Math.min(income,hi)-lo)*rate;
-  }
-  return tax;
-}
+    function trinnTax(income) {
+        const steps = [
+            [226100, 318300, 0.017],
+            [318300, 725050, 0.040],
+            [725050, 980100, 0.137],
+            [980100, 1467200, 0.168],
+            [1467200, Infinity, 0.178]
+        ];
+        let tax = 0;
+        for (const [lo, hi, rate] of steps) {
+            if (income > lo) tax += Math.max(0, Math.min(income, hi) - lo) * rate;
+        }
+        return tax;
+    }
 
-function calculateTax(gross){
-  const minst = Math.min(gross*0.46,95700);
-  const ordinaryBase = Math.max(0,gross-minst-114540);
-  const ordinaryTax = ordinaryBase*0.22;
+    function calculateTax(gross) {
+        const minst = Math.min(gross * 0.46, 95700);
+        const ordinaryBase = Math.max(0, gross - minst - 114540);
+        const ordinaryTax = ordinaryBase * 0.22;
 
-  const normalTrygd = gross*0.076;
-  const rampTrygd = Math.max(0,(gross-99650)*0.25);
-  const trygd = gross <= 99650 ? 0 : Math.min(normalTrygd,rampTrygd);
+        const normalTrygd = gross * 0.076;
+        const rampTrygd = Math.max(0, (gross - 99650) * 0.25);
+        const trygd = gross <= 99650 ? 0 : Math.min(normalTrygd, rampTrygd);
 
-  const trinn = trinnTax(gross);
-  const incomeTax = ordinaryTax+trygd+trinn;
-  const net = Math.max(0,gross-incomeTax);
+        const trinn = trinnTax(gross);
+        const incomeTax = ordinaryTax + trygd + trinn;
+        const net = Math.max(0, gross - incomeTax);
 
-  const vatNominal = Number(vatRateEl.value)/100;
-  const consumptionShare = Number(consEl.value)/100;
-  const vatInclusiveShare = vatNominal === 0 ? 0 : vatNominal/(1+vatNominal);
-  const vat = net*consumptionShare*vatInclusiveShare;
+        const vatNominal = Number(vatRateEl.value) / 100;
+        const consumptionShare = Number(consEl.value) / 100;
+        const vatInclusiveShare = vatNominal === 0 ? 0 : vatNominal / (1 + vatNominal);
+        const vat = net * consumptionShare * vatInclusiveShare;
 
-  return {incomeTax,net,vat,total:incomeTax+vat};
-}
+        return {incomeTax, net, vat, total: incomeTax + vat};
+    }
 
-function money(v){ return `${nf0.format(Math.round(v))} kr`; }
-function signedMoney(v){
-  const rounded=Math.round(v);
-  if(rounded===0) return "0 kr";
-  return `${rounded>0?"+":"−"}${nf0.format(Math.abs(rounded))} kr`;
-}
-function signedBillion(v){
-  if(Math.abs(v)<0.05) return "0 mrd.";
-  return `${v>0?"+":"−"}${nf1.format(Math.abs(v))} mrd.`;
-}
+    function money(v) {
+        return `${nf0.format(Math.round(v))} kr`;
+    }
 
-function impactClass(v){
-  return v<-.5 ? "good" : v>.5 ? "bad" : "neutral";
-}
+    function signedMoney(v) {
+        const rounded = Math.round(v);
+        if (rounded === 0) return "0 kr";
+        return `${rounded > 0 ? "+" : "−"}${nf0.format(Math.abs(rounded))} kr`;
+    }
 
-function effectiveAmount(cat){
-  if(cat.expandable){
-    return cat.children.reduce((s,ch)=>s+ch.amount*(ch.level/100),0);
-  }
-  return cat.amount*(cat.level/100);
-}
+    function signedBillion(v) {
+        if (Math.abs(v) < 0.05) return "0 mrd.";
+        return `${v > 0 ? "+" : "−"}${nf1.format(Math.abs(v))} mrd.`;
+    }
 
-function parentLevel(cat){
-  if(!cat.expandable) return cat.level;
-  const weighted=cat.children.reduce((s,ch)=>s+ch.amount*ch.level,0);
-  return weighted/cat.amount;
-}
+    function impactClass(v) {
+        return v < -.5 ? "good" : v > .5 ? "bad" : "neutral";
+    }
 
-function rowMarkup(cat,currentTax,{sub=false}={}){
-  const share=cat.amount/BASE_TOTAL;
-  const ownBase=currentTax*share;
-  const newAmt=cat.amount*(cat.level/100);
-  const deltaAmt=newAmt-cat.amount;
-  const ownDelta=currentTax*(deltaAmt/BASE_TOTAL);
+    function effectiveAmount(cat) {
+        if (cat.expandable) {
+            return cat.children.reduce((s, ch) => s + ch.amount * (ch.level / 100), 0);
+        }
+        return cat.amount * (cat.level / 100);
+    }
 
-  return `
+    function parentLevel(cat) {
+        if (!cat.expandable) return cat.level;
+        const weighted = cat.children.reduce((s, ch) => s + ch.amount * ch.level, 0);
+        return weighted / cat.amount;
+    }
+
+    function rowMarkup(cat, currentTax, {sub = false} = {}) {
+        const share = cat.amount / BASE_TOTAL;
+        const ownBase = currentTax * share;
+        const newAmt = cat.amount * (cat.level / 100);
+        const deltaAmt = newAmt - cat.amount;
+        const ownDelta = currentTax * (deltaAmt / BASE_TOTAL);
+
+        return `
     <div>
       <div class="budget-name">
-        ${cat.expandable ? `<button class="expand-btn" data-expand="${cat.id}" aria-expanded="${otherExpanded}" aria-label="${otherExpanded?"Skjul":"Vis"} underposter for Andre utgifter"><span>›</span></button>` : ``}
+        ${cat.expandable ? `<button class="expand-btn" data-expand="${cat.id}" aria-expanded="${otherExpanded}" aria-label="${otherExpanded ? "Skjul" : "Vis"} underposter for Andre utgifter"><span>›</span></button>` : ``}
         <span>${cat.name}</span>
       </div>
-      <div class="budget-details">${nf1.format(cat.amount)} mrd. · ${pct1.format(share*100)} % av budsjettet · din grunnandel ${money(ownBase)}/år${cat.note ? ` · ${cat.note}` : ``}</div>
-      <div class="allocation"><span style="width:${Math.min(100,share*100*4.2)}%"></span></div>
+      <div class="budget-details">${nf1.format(cat.amount)} mrd. · ${pct1.format(share * 100)} % av budsjettet · din grunnandel ${money(ownBase)}/år${cat.note ? ` · ${cat.note}` : ``}</div>
+      <div class="allocation"><span style="width:${Math.min(100, share * 100 * 4.2)}%"></span></div>
     </div>
     <div class="slide-wrap">
       <input aria-label="${cat.name}" type="range" min="0" max="200" step="1" value="${Math.round(cat.level)}" ${sub ? `data-child-id="${cat.id}"` : `data-id="${cat.id}"`}>
@@ -509,236 +922,236 @@ function rowMarkup(cat,currentTax,{sub=false}={}){
     <div class="impact ${impactClass(ownDelta)}">
       <strong>${signedMoney(ownDelta)}/år</strong>
       <span>Ny ramme: ${nf1.format(newAmt)} mrd.</span>
-      ${Math.abs(ownDelta)>=.5 ? `<div class="chip ${ownDelta<0?"good":"bad"}">${ownDelta<0?"du sparer":"du betaler mer"}</div>` : ``}
+      ${Math.abs(ownDelta) >= .5 ? `<div class="chip ${ownDelta < 0 ? "good" : "bad"}">${ownDelta < 0 ? "du sparer" : "du betaler mer"}</div>` : ``}
     </div>`;
-}
+    }
 
 
-function updateLiveRow(rowEl, cat, currentTax){
-  if(!rowEl) return;
+    function updateLiveRow(rowEl, cat, currentTax) {
+        if (!rowEl) return;
 
-  const newAmt=cat.amount*(cat.level/100);
-  const deltaAmt=newAmt-cat.amount;
-  const ownDelta=currentTax*(deltaAmt/BASE_TOTAL);
+        const newAmt = cat.amount * (cat.level / 100);
+        const deltaAmt = newAmt - cat.amount;
+        const ownDelta = currentTax * (deltaAmt / BASE_TOTAL);
 
-  const impact=rowEl.querySelector(".impact");
-  if(impact){
-    impact.className=`impact ${impactClass(ownDelta)}`;
-    impact.innerHTML=`
+        const impact = rowEl.querySelector(".impact");
+        if (impact) {
+            impact.className = `impact ${impactClass(ownDelta)}`;
+            impact.innerHTML = `
       <strong>${signedMoney(ownDelta)}/år</strong>
       <span>Ny ramme: ${nf1.format(newAmt)} mrd.</span>
-      ${Math.abs(ownDelta)>=.5 ? `<div class="chip ${ownDelta<0?"good":"bad"}">${ownDelta<0?"du sparer":"du betaler mer"}</div>` : ``}
+      ${Math.abs(ownDelta) >= .5 ? `<div class="chip ${ownDelta < 0 ? "good" : "bad"}">${ownDelta < 0 ? "du sparer" : "du betaler mer"}</div>` : ``}
     `;
-  }
-}
-
-function renderRows(){
-  const list=document.getElementById("budgetList");
-  list.innerHTML="";
-  const currentTax=calculateTax(Number(salaryEl.value)||0).total;
-
-  categories.forEach(cat=>{
-    if(cat.expandable) cat.level=parentLevel(cat);
-
-    const row=document.createElement("div");
-    row.className=`budget-row${cat.expandable?" other-parent":""}`;
-    row.innerHTML=rowMarkup(cat,currentTax);
-    list.appendChild(row);
-
-    if(cat.expandable && otherExpanded){
-      const subgroup=document.createElement("div");
-      subgroup.className="subgroup";
-      subgroup.innerHTML=`<div class="reconstruction-note"><strong>Rekonstruert underfordeling.</strong> Finansdepartementet publiserer «Andre utgifter» som en residual, ikke som én offisiell undergruppe. Her er de største postene/gruppene som kan skilles ut fra Gul bok. «Annet» absorberer mindre poster, avrundinger og usikre krysskoblinger mot blant annet bistandsklassifisering.</div>`;
-      cat.children.forEach(ch=>{
-        const childRow=document.createElement("div");
-        childRow.className="budget-row subrow";
-        childRow.innerHTML=rowMarkup(ch,currentTax,{sub:true});
-        subgroup.appendChild(childRow);
-      });
-      list.appendChild(subgroup);
+        }
     }
-  });
 
-  list.querySelectorAll('[data-expand]').forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      otherExpanded=!otherExpanded;
-      renderRows();
-    });
-  });
+    function renderRows() {
+        const list = document.getElementById("budgetList");
+        list.innerHTML = "";
+        const currentTax = calculateTax(Number(salaryEl.value) || 0).total;
 
-  list.querySelectorAll('input[data-id]').forEach(slider=>{
-    slider.addEventListener("input",e=>{
-      const cat=categories.find(c=>c.id===Number(e.target.dataset.id));
-      const value=Number(e.target.value);
+        categories.forEach(cat => {
+            if (cat.expandable) cat.level = parentLevel(cat);
 
-      if(cat.expandable){
-        cat.children.forEach(ch=>ch.level=value);
-        cat.level=value;
-      }else{
-        cat.level=value;
-      }
+            const row = document.createElement("div");
+            row.className = `budget-row${cat.expandable ? " other-parent" : ""}`;
+            row.innerHTML = rowMarkup(cat, currentTax);
+            list.appendChild(row);
 
-      maybeShowEasterEgg(cat.name, value);
+            if (cat.expandable && otherExpanded) {
+                const subgroup = document.createElement("div");
+                subgroup.className = "subgroup";
+                subgroup.innerHTML = `<div class="reconstruction-note"><strong>Rekonstruert underfordeling.</strong> Finansdepartementet publiserer «Andre utgifter» som en residual, ikke som én offisiell undergruppe. Her er de største postene/gruppene som kan skilles ut fra Gul bok. «Annet» absorberer mindre poster, avrundinger og usikre krysskoblinger mot blant annet bistandsklassifisering.</div>`;
+                cat.children.forEach(ch => {
+                    const childRow = document.createElement("div");
+                    childRow.className = "budget-row subrow";
+                    childRow.innerHTML = rowMarkup(ch, currentTax, {sub: true});
+                    subgroup.appendChild(childRow);
+                });
+                list.appendChild(subgroup);
+            }
+        });
 
-      // Ikke tegn slideren på nytt mens brukeren drar.
-      const pctBox=e.target.closest(".slide-wrap")?.querySelector(".pct");
-      if(pctBox) pctBox.textContent=`${pct1.format(value)} %`;
+        list.querySelectorAll('[data-expand]').forEach(btn => {
+            btn.addEventListener("click", () => {
+                otherExpanded = !otherExpanded;
+                renderRows();
+            });
+        });
 
-      const rowEl=e.target.closest(".budget-row");
-      const currentTax=calculateTax(Number(salaryEl.value)||0).total;
-      updateLiveRow(rowEl, cat, currentTax);
+        list.querySelectorAll('input[data-id]').forEach(slider => {
+            slider.addEventListener("input", e => {
+                const cat = categories.find(c => c.id === Number(e.target.dataset.id));
+                const value = Number(e.target.value);
 
-      updateBudgetSummary();
-      updateStats();
-    });
+                if (cat.expandable) {
+                    cat.children.forEach(ch => ch.level = value);
+                    cat.level = value;
+                } else {
+                    cat.level = value;
+                }
 
-    slider.addEventListener("change",()=>{
-      // Tegn radene på nytt først når brukeren slipper slideren.
-      renderRows();
-      updateBudgetSummary();
-      updateStats();
-    });
-  });
+                maybeShowEasterEgg(cat.name, value);
 
-  list.querySelectorAll('input[data-child-id]').forEach(slider=>{
-    slider.addEventListener("input",e=>{
-      const parent=categories.find(c=>c.expandable);
-      const child=parent.children.find(ch=>ch.id===e.target.dataset.childId);
-      child.level=Number(e.target.value);
-      parent.level=parentLevel(parent);
+                // Ikke tegn slideren på nytt mens brukeren drar.
+                const pctBox = e.target.closest(".slide-wrap")?.querySelector(".pct");
+                if (pctBox) pctBox.textContent = `${pct1.format(value)} %`;
 
-      maybeShowEasterEgg(child.name, child.level);
+                const rowEl = e.target.closest(".budget-row");
+                const currentTax = calculateTax(Number(salaryEl.value) || 0).total;
+                updateLiveRow(rowEl, cat, currentTax);
 
-      const pctBox=e.target.closest(".slide-wrap")?.querySelector(".pct");
-      if(pctBox) pctBox.textContent=`${pct1.format(child.level)} %`;
+                updateBudgetSummary();
+                updateStats();
+            });
 
-      const rowEl=e.target.closest(".budget-row");
-      const currentTax=calculateTax(Number(salaryEl.value)||0).total;
-      updateLiveRow(rowEl, child, currentTax);
+            slider.addEventListener("change", () => {
+                // Tegn radene på nytt først når brukeren slipper slideren.
+                renderRows();
+                updateBudgetSummary();
+                updateStats();
+            });
+        });
 
-      const parentRow=document.querySelector(".budget-row.other-parent");
-      if(parentRow){
-        const parentPct=parentRow.querySelector(".pct");
-        if(parentPct) parentPct.textContent=`${pct1.format(parent.level)} %`;
+        list.querySelectorAll('input[data-child-id]').forEach(slider => {
+            slider.addEventListener("input", e => {
+                const parent = categories.find(c => c.expandable);
+                const child = parent.children.find(ch => ch.id === e.target.dataset.childId);
+                child.level = Number(e.target.value);
+                parent.level = parentLevel(parent);
 
-        const parentNewAmt=effectiveAmount(parent);
-        const parentOwnDelta=currentTax*((parentNewAmt-parent.amount)/BASE_TOTAL);
-        const parentImpact=parentRow.querySelector(".impact");
-        if(parentImpact){
-          parentImpact.className=`impact ${impactClass(parentOwnDelta)}`;
-          parentImpact.innerHTML=`
+                maybeShowEasterEgg(child.name, child.level);
+
+                const pctBox = e.target.closest(".slide-wrap")?.querySelector(".pct");
+                if (pctBox) pctBox.textContent = `${pct1.format(child.level)} %`;
+
+                const rowEl = e.target.closest(".budget-row");
+                const currentTax = calculateTax(Number(salaryEl.value) || 0).total;
+                updateLiveRow(rowEl, child, currentTax);
+
+                const parentRow = document.querySelector(".budget-row.other-parent");
+                if (parentRow) {
+                    const parentPct = parentRow.querySelector(".pct");
+                    if (parentPct) parentPct.textContent = `${pct1.format(parent.level)} %`;
+
+                    const parentNewAmt = effectiveAmount(parent);
+                    const parentOwnDelta = currentTax * ((parentNewAmt - parent.amount) / BASE_TOTAL);
+                    const parentImpact = parentRow.querySelector(".impact");
+                    if (parentImpact) {
+                        parentImpact.className = `impact ${impactClass(parentOwnDelta)}`;
+                        parentImpact.innerHTML = `
             <strong>${signedMoney(parentOwnDelta)}/år</strong>
             <span>Ny ramme: ${nf1.format(parentNewAmt)} mrd.</span>
-            ${Math.abs(parentOwnDelta)>=.5 ? `<div class="chip ${parentOwnDelta<0?"good":"bad"}">${parentOwnDelta<0?"du sparer":"du betaler mer"}</div>` : ``}
+            ${Math.abs(parentOwnDelta) >= .5 ? `<div class="chip ${parentOwnDelta < 0 ? "good" : "bad"}">${parentOwnDelta < 0 ? "du sparer" : "du betaler mer"}</div>` : ``}
           `;
+                    }
+                }
+
+                updateBudgetSummary();
+                updateStats();
+            });
+
+            slider.addEventListener("change", () => {
+                renderRows();
+                updateBudgetSummary();
+                updateStats();
+            });
+        });
+    }
+
+
+    function currentBudgetDelta() {
+        return categories.reduce((s, c) => s + (effectiveAmount(c) - c.amount), 0);
+    }
+
+    function citizenBudgetTaxDelta(modeledTotalTax) {
+        // Samme kroneeffekt som «Din effekt» i budsjettoversikten.
+        // Borgerens modellerte skattebidrag består av inntektsskatt + anslått moms.
+        return modeledTotalTax * (currentBudgetDelta() / BASE_TOTAL);
+    }
+
+    function updateStats() {
+        const gross = Math.max(0, Number(salaryEl.value) || 0);
+        const t = calculateTax(gross);
+
+        const budgetTaxDelta = citizenBudgetTaxDelta(t.total);
+        const adjustedIncomeTax = t.incomeTax + budgetTaxDelta;
+
+        const incomeTaxLabel = document.getElementById("incomeTaxLabel");
+        const incomeTaxStat = document.getElementById("incomeTaxStat");
+        const incomeTaxSub = document.getElementById("incomeTaxSub");
+
+        document.getElementById("grossStat").textContent = money(gross);
+
+        if (adjustedIncomeTax >= 0) {
+            incomeTaxLabel.textContent = "Anslått inntektsskatt";
+            incomeTaxStat.textContent = money(adjustedIncomeTax);
+            incomeTaxStat.className = "value";
+            incomeTaxSub.textContent = `Grunnskatt ${money(t.incomeTax)} · budsjetteffekt ${signedMoney(budgetTaxDelta)}`;
+        } else {
+            incomeTaxLabel.textContent = "Borgerutbytte";
+            incomeTaxStat.textContent = money(Math.abs(adjustedIncomeTax));
+            incomeTaxStat.className = "value good";
+            incomeTaxSub.textContent = `Budsjettbesparelsen overstiger beregnet inntektsskatt med ${money(Math.abs(adjustedIncomeTax))}`;
         }
-      }
 
-      updateBudgetSummary();
-      updateStats();
+        document.getElementById("vatStat").textContent = money(t.vat);
+
+        // Moms holdes separat; samlet modellert skatt kan dermed også bli negativ.
+        const adjustedTotal = adjustedIncomeTax + t.vat;
+        document.getElementById("totalTaxStat").textContent =
+            adjustedTotal >= 0 ? money(adjustedTotal) : `−${money(Math.abs(adjustedTotal))}`;
+
+        document.getElementById("taxRateStat").textContent = gross > 0
+            ? `${pct1.format(adjustedTotal / gross * 100)} % av brutto lønn i modellen`
+            : "0 %";
+
+        document.getElementById("vatRateOut").textContent = `${String(vatRateEl.value).replace(".", ",")} %`;
+        document.getElementById("consumptionOut").textContent = `${consEl.value} %`;
+    }
+
+    function updateBudgetSummary() {
+        const gross = Math.max(0, Number(salaryEl.value) || 0);
+        const totalTax = calculateTax(gross).total;
+        const delta = currentBudgetDelta();
+        const ownDelta = totalTax * (delta / BASE_TOTAL);
+
+        const budgetDelta = document.getElementById("budgetDelta");
+        const year = document.getElementById("citizenDeltaYear");
+        const month = document.getElementById("citizenDeltaMonth");
+
+        budgetDelta.textContent = signedBillion(delta);
+        year.textContent = signedMoney(ownDelta);
+        month.textContent = signedMoney(ownDelta / 12);
+
+        [budgetDelta, year, month].forEach(el => el.className = `v ${impactClass(ownDelta)}`);
+    }
+
+    function updateAll() {
+        updateStats();
+        updateBudgetSummary();
+        renderRows();
+    }
+
+    salaryEl.addEventListener("input", updateAll);
+    vatRateEl.addEventListener("input", updateAll);
+    consEl.addEventListener("input", updateAll);
+
+    document.getElementById("resetPerson").addEventListener("click", () => {
+        salaryEl.value = AVG_SALARY;
+        vatRateEl.value = 18;
+        consEl.value = 90;
+        updateAll();
+    });
+    document.getElementById("resetBudget").addEventListener("click", () => {
+        categories.forEach(c => {
+            c.level = 100;
+            if (c.expandable) c.children.forEach(ch => ch.level = 100);
+        });
+        updateAll();
     });
 
-    slider.addEventListener("change",()=>{
-      renderRows();
-      updateBudgetSummary();
-      updateStats();
-    });
-  });
-}
-
-
-function currentBudgetDelta(){
-  return categories.reduce((s,c)=>s+(effectiveAmount(c)-c.amount),0);
-}
-
-function citizenBudgetTaxDelta(modeledTotalTax){
-  // Samme kroneeffekt som «Din effekt» i budsjettoversikten.
-  // Borgerens modellerte skattebidrag består av inntektsskatt + anslått moms.
-  return modeledTotalTax*(currentBudgetDelta()/BASE_TOTAL);
-}
-
-function updateStats(){
-  const gross=Math.max(0,Number(salaryEl.value)||0);
-  const t=calculateTax(gross);
-
-  const budgetTaxDelta=citizenBudgetTaxDelta(t.total);
-  const adjustedIncomeTax=t.incomeTax+budgetTaxDelta;
-
-  const incomeTaxLabel=document.getElementById("incomeTaxLabel");
-  const incomeTaxStat=document.getElementById("incomeTaxStat");
-  const incomeTaxSub=document.getElementById("incomeTaxSub");
-
-  document.getElementById("grossStat").textContent=money(gross);
-
-  if(adjustedIncomeTax >= 0){
-    incomeTaxLabel.textContent="Anslått inntektsskatt";
-    incomeTaxStat.textContent=money(adjustedIncomeTax);
-    incomeTaxStat.className="value";
-    incomeTaxSub.textContent=`Grunnskatt ${money(t.incomeTax)} · budsjetteffekt ${signedMoney(budgetTaxDelta)}`;
-  }else{
-    incomeTaxLabel.textContent="Borgerutbytte";
-    incomeTaxStat.textContent=money(Math.abs(adjustedIncomeTax));
-    incomeTaxStat.className="value good";
-    incomeTaxSub.textContent=`Budsjettbesparelsen overstiger beregnet inntektsskatt med ${money(Math.abs(adjustedIncomeTax))}`;
-  }
-
-  document.getElementById("vatStat").textContent=money(t.vat);
-
-  // Moms holdes separat; samlet modellert skatt kan dermed også bli negativ.
-  const adjustedTotal=adjustedIncomeTax+t.vat;
-  document.getElementById("totalTaxStat").textContent=
-    adjustedTotal >= 0 ? money(adjustedTotal) : `−${money(Math.abs(adjustedTotal))}`;
-
-  document.getElementById("taxRateStat").textContent=gross>0
-    ? `${pct1.format(adjustedTotal/gross*100)} % av brutto lønn i modellen`
-    : "0 %";
-
-  document.getElementById("vatRateOut").textContent=`${String(vatRateEl.value).replace(".",",")} %`;
-  document.getElementById("consumptionOut").textContent=`${consEl.value} %`;
-}
-
-function updateBudgetSummary(){
-  const gross=Math.max(0,Number(salaryEl.value)||0);
-  const totalTax=calculateTax(gross).total;
-  const delta=currentBudgetDelta();
-  const ownDelta=totalTax*(delta/BASE_TOTAL);
-
-  const budgetDelta=document.getElementById("budgetDelta");
-  const year=document.getElementById("citizenDeltaYear");
-  const month=document.getElementById("citizenDeltaMonth");
-
-  budgetDelta.textContent=signedBillion(delta);
-  year.textContent=signedMoney(ownDelta);
-  month.textContent=signedMoney(ownDelta/12);
-
-  [budgetDelta,year,month].forEach(el=>el.className=`v ${impactClass(ownDelta)}`);
-}
-
-function updateAll(){
-  updateStats();
-  updateBudgetSummary();
-  renderRows();
-}
-
-salaryEl.addEventListener("input",updateAll);
-vatRateEl.addEventListener("input",updateAll);
-consEl.addEventListener("input",updateAll);
-
-document.getElementById("resetPerson").addEventListener("click",()=>{
-  salaryEl.value=AVG_SALARY;
-  vatRateEl.value=18;
-  consEl.value=90;
-  updateAll();
-});
-document.getElementById("resetBudget").addEventListener("click",()=>{
-  categories.forEach(c=>{
-    c.level=100;
-    if(c.expandable) c.children.forEach(ch=>ch.level=100);
-  });
-  updateAll();
-});
-
-updateAll();
+    updateAll();
 </script>
 </body>
 </html>
