@@ -83,7 +83,116 @@
 
         .stats {
             grid-template-columns:repeat(4, minmax(0, 1fr));
-            margin-top: 26px
+            margin-top: 16px
+        }
+
+        .income-chart {
+            margin-top: 26px;
+            padding: 22px;
+            display: grid;
+            grid-template-columns:minmax(230px, .75fr) minmax(300px, 1.25fr);
+            gap: 28px;
+            align-items: center
+        }
+
+        .pie-wrap {
+            display: grid;
+            place-items: center
+        }
+
+        .income-pie {
+            width: min(300px, 72vw);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: conic-gradient(
+                    #a53a33 0 var(--tax-end),
+                    #d99a24 var(--tax-end) var(--vat-end),
+                    #2d7567 var(--vat-end) 100%
+            );
+            box-shadow: inset 0 0 0 1px rgba(20, 33, 43, .08), 0 12px 30px rgba(20, 33, 43, .08);
+            transition: background .12s linear
+        }
+
+        .chart-copy h2 {
+            font-size: 1.5rem;
+            margin: 0 0 5px
+        }
+
+        .chart-copy > p {
+            margin: 0 0 18px;
+            color: var(--muted);
+            font-size: .9rem
+        }
+
+        .pie-legend {
+            display: grid;
+            gap: 10px
+        }
+
+        .legend-row {
+            display: grid;
+            grid-template-columns:14px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf1f3
+        }
+
+        .legend-row:last-child {
+            border-bottom: 0
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%
+        }
+
+        .legend-dot.tax {
+            background: #a53a33
+        }
+
+        .legend-dot.vat {
+            background: #d99a24
+        }
+
+        .legend-dot.net {
+            background: #2d7567
+        }
+
+        .legend-name {
+            font-weight: 800
+        }
+
+        .legend-value {
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+
+        .legend-value strong {
+            display: block;
+            font-size: 1rem
+        }
+
+        .legend-value span {
+            display: block;
+            color: var(--muted);
+            font-size: .76rem
+        }
+
+        .dividend-note {
+            display: none;
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: var(--good-bg);
+            color: var(--good);
+            font-size: .84rem;
+            font-weight: 750
+        }
+
+        .dividend-note.show {
+            display: block
         }
 
         .card {
@@ -468,6 +577,10 @@
         }
 
         @media (max-width: 900px) {
+            .income-chart {
+                grid-template-columns:1fr
+            }
+
             .stats {
                 grid-template-columns:repeat(2, 1fr)
             }
@@ -516,6 +629,37 @@
         <p class="lede">Se hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på staten – og dra i
             budsjettpostene for å se hva høyere eller lavere pengebruk ville bety for din egen skattebelastning.</p>
     </header>
+
+    <section class="card income-chart" aria-labelledby="incomeChartTitle">
+        <div class="pie-wrap">
+            <div id="incomePie" class="income-pie" role="img"
+                 aria-label="Fordeling av brutto lønn mellom skatt, moms og netto inntekt"
+                 style="--tax-end:0%;--vat-end:0%"></div>
+        </div>
+        <div class="chart-copy">
+            <h2 id="incomeChartTitle">Hvor blir lønnen av?</h2>
+            <p>Fordeling av brutto årslønn mellom modellert inntektsskatt, moms og det som er igjen som disponibel
+                nettoinntekt.</p>
+            <div class="pie-legend">
+                <div class="legend-row">
+                    <span class="legend-dot tax"></span>
+                    <span class="legend-name">Skatt</span>
+                    <span class="legend-value"><strong id="pieTaxPct">–</strong><span id="pieTaxKr">–</span></span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot vat"></span>
+                    <span class="legend-name">Moms</span>
+                    <span class="legend-value"><strong id="pieVatPct">–</strong><span id="pieVatKr">–</span></span>
+                </div>
+                <div class="legend-row">
+                    <span class="legend-dot net"></span>
+                    <span class="legend-name">Netto inntekt</span>
+                    <span class="legend-value"><strong id="pieNetPct">–</strong><span id="pieNetKr">–</span></span>
+                </div>
+            </div>
+            <div id="pieDividendNote" class="dividend-note"></div>
+        </div>
+    </section>
 
     <section class="grid stats">
         <div class="card stat">
@@ -1070,6 +1214,51 @@
         return modeledTotalTax * (currentBudgetDelta() / BASE_TOTAL);
     }
 
+    function updateIncomePie(gross, adjustedIncomeTax, vat) {
+        const pie = document.getElementById("incomePie");
+        if (!pie) return;
+
+        // Pie-chartet viser bare fordelingen av selve brutto lønnen.
+        // Et eventuelt borgerutbytte kommer i tillegg og vises derfor separat.
+        const salaryTax = Math.max(0, adjustedIncomeTax);
+        const salaryVat = Math.max(0, vat);
+        const net = Math.max(0, gross - salaryTax - salaryVat);
+
+        let taxShare = 0, vatShare = 0, netShare = 0;
+
+        if (gross > 0) {
+            taxShare = Math.min(100, salaryTax / gross * 100);
+            vatShare = Math.min(100 - taxShare, salaryVat / gross * 100);
+            netShare = Math.max(0, 100 - taxShare - vatShare);
+        }
+
+        const taxEnd = taxShare;
+        const vatEnd = taxShare + vatShare;
+
+        pie.style.setProperty("--tax-end", `${taxEnd}%`);
+        pie.style.setProperty("--vat-end", `${vatEnd}%`);
+        pie.setAttribute("aria-label",
+            `Skatt ${pct1.format(taxShare)} prosent, moms ${pct1.format(vatShare)} prosent, netto inntekt ${pct1.format(netShare)} prosent`);
+
+        document.getElementById("pieTaxPct").textContent = `${pct1.format(taxShare)} %`;
+        document.getElementById("pieTaxKr").textContent = money(salaryTax);
+
+        document.getElementById("pieVatPct").textContent = `${pct1.format(vatShare)} %`;
+        document.getElementById("pieVatKr").textContent = money(salaryVat);
+
+        document.getElementById("pieNetPct").textContent = `${pct1.format(netShare)} %`;
+        document.getElementById("pieNetKr").textContent = money(net);
+
+        const dividendNote = document.getElementById("pieDividendNote");
+        if (adjustedIncomeTax < 0) {
+            dividendNote.textContent = `Borgerutbytte: ${money(Math.abs(adjustedIncomeTax))} kommer i tillegg til lønnen.`;
+            dividendNote.classList.add("show");
+        } else {
+            dividendNote.textContent = "";
+            dividendNote.classList.remove("show");
+        }
+    }
+
     function updateStats() {
         const gross = Math.max(0, Number(salaryEl.value) || 0);
         const t = calculateTax(gross);
@@ -1096,6 +1285,7 @@
         }
 
         document.getElementById("vatStat").textContent = money(t.vat);
+        updateIncomePie(gross, adjustedIncomeTax, t.vat);
 
         // Moms holdes separat; samlet modellert skatt kan dermed også bli negativ.
         const adjustedTotal = adjustedIncomeTax + t.vat;
