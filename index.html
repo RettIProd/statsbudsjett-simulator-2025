@@ -726,7 +726,10 @@
                     moms) og legger kroneeffekten til eller trekker den fra inntektsskatten. Hvis besparelsen overstiger
                     inntektsskatten, vises overskytende beløp som «Borgerutbytte».</p>
             </div>
-            <button id="resetBudget">Nullstill budsjett</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button id="shareBudget">Del budsjett</button>
+                <button id="resetBudget">Nullstill budsjett</button>
+            </div>
         </div>
 
         <div class="budget-summary">
@@ -934,8 +937,87 @@
         }
     };
 
+    // ------------------------------------------------------------
+    // BUDGET URL ENCODING / DECODING
+    // ------------------------------------------------------------
+    function encodeBudget() {
+        const parts = [];
+        categories.forEach(cat => {
+            if (cat.level !== 100) {
+                parts.push({id: cat.id, l: Math.round(cat.level)});
+            }
+            if (cat.expandable) {
+                cat.children.forEach(ch => {
+                    if (ch.level !== 100) {
+                        parts.push({id: ch.id, l: Math.round(ch.level)});
+                    }
+                });
+            }
+        });
+        if (parts.length === 0) return null;
+        return btoa(JSON.stringify(parts));
+    }
+
+    function decodeBudget(b64) {
+        try {
+            const parts = JSON.parse(atob(b64));
+            if (!Array.isArray(parts)) return;
+            parts.forEach(p => {
+                if (typeof p.l !== "number") return;
+                const pid = String(p.id);
+                // Check top-level categories (ids are numbers)
+                const cat = categories.find(c => String(c.id) === pid);
+                if (cat) {
+                    cat.level = p.l;
+                    if (cat.expandable) cat.children.forEach(ch => ch.level = p.l);
+                    return;
+                }
+                // Check children (ids are strings like "other-0")
+                categories.forEach(c => {
+                    if (c.expandable) {
+                        const ch = c.children.find(x => x.id === pid);
+                        if (ch) ch.level = p.l;
+                    }
+                });
+            });
+            return true;
+        } catch { return false; }
+    }
+
+    function loadBudgetFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const b64 = params.get("budget");
+        if (b64) return decodeBudget(b64);
+        return false;
+    }
+
+    function copyBudgetLink() {
+        const b64 = encodeBudget();
+        if (!b64) {
+            showToast("Ingen endringer å dele – budsjettet er på standardverdiene.");
+            return;
+        }
+        const url = new URL(window.location);
+        url.searchParams.set("budget", b64);
+        navigator.clipboard.writeText(url.toString()).then(() => {
+            showToast("Budsjettlenke kopiert til utklippstavlen!");
+        }).catch(() => {
+            showToast("Kunne ikke kopiere lenken.");
+        });
+    }
+
     let easterToastTimer = null;
     const easterEggState = new Map();
+
+    function showToast(msg) {
+        const toast = document.getElementById("easterToast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(easterToastTimer);
+        easterToastTimer = setTimeout(() => {
+            toast.classList.remove("show");
+        }, 2600);
+    }
 
     function maybeShowEasterEgg(name, level) {
         const messages = easterEggs[name];
@@ -956,15 +1038,7 @@
         if (!message) return;
 
         easterEggState.set(name, endpoint);
-
-        const toast = document.getElementById("easterToast");
-        toast.textContent = message;
-        toast.classList.add("show");
-
-        clearTimeout(easterToastTimer);
-        easterToastTimer = setTimeout(() => {
-            toast.classList.remove("show");
-        }, 2600);
+        showToast(message);
     }
 
     const nf0 = new Intl.NumberFormat("nb-NO", {maximumFractionDigits: 0});
@@ -1333,13 +1407,23 @@
         consEl.value = 90;
         updateAll();
     });
+    document.getElementById("shareBudget").addEventListener("click", copyBudgetLink);
     document.getElementById("resetBudget").addEventListener("click", () => {
         categories.forEach(c => {
             c.level = 100;
             if (c.expandable) c.children.forEach(ch => ch.level = 100);
         });
+        // Remove budget param from URL on reset
+        const url = new URL(window.location);
+        url.searchParams.delete("budget");
+        window.history.replaceState({}, "", url);
         updateAll();
     });
+
+    // Load budget from URL if present
+    if (loadBudgetFromURL()) {
+        showToast("Budsjett lastet fra lenke!");
+    }
 
     updateAll();
 </script>
