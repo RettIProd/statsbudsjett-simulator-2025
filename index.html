@@ -552,6 +552,74 @@
             white-space: nowrap
         }
 
+        .floating-pie {
+            position: fixed;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%) translateX(18px);
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            gap: 10px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(20, 33, 43, .12);
+            padding: 16px 14px 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+
+        .floating-pie.visible {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+            pointer-events: auto;
+        }
+
+        .floating-pie .income-pie {
+            width: 110px;
+            height: 110px;
+        }
+
+        .floating-pie-legend {
+            display: grid;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .floating-pie-legend .legend-row {
+            padding: 4px 0;
+            border-bottom: 1px solid #edf1f3;
+            gap: 6px;
+        }
+
+        .floating-pie-legend .legend-row:last-child {
+            border-bottom: 0;
+        }
+
+        .floating-pie-legend .legend-dot {
+            width: 9px;
+            height: 9px;
+        }
+
+        .floating-pie-legend .legend-name {
+            font-size: .7rem;
+            font-weight: 700;
+        }
+
+        .floating-pie-legend .legend-value {
+            font-size: .68rem;
+        }
+
+        .floating-pie-legend .legend-value strong {
+            font-size: .78rem;
+        }
+
+        .floating-pie-legend .legend-value span {
+            font-size: .62rem;
+        }
+
         .easter-toast {
             position: fixed;
             left: 50%;
@@ -577,6 +645,10 @@
         }
 
         @media (max-width: 900px) {
+            .floating-pie {
+                display: none !important
+            }
+
             .income-chart {
                 grid-template-columns:1fr
             }
@@ -783,6 +855,28 @@
         </p>
     </section>
 </div>
+
+<div id="floatingPie" class="floating-pie" role="img" aria-label="Mini oversikt over lønnsfordeling">
+    <div id="floatingPieChart" class="income-pie" style="--tax-end:0%;--vat-end:0%"></div>
+    <div class="floating-pie-legend">
+        <div class="legend-row">
+            <span class="legend-dot tax"></span>
+            <span class="legend-name">Skatt</span>
+            <span class="legend-value"><strong id="fPieTaxPct">–</strong><span id="fPieTaxKr">–</span></span>
+        </div>
+        <div class="legend-row">
+            <span class="legend-dot vat"></span>
+            <span class="legend-name">Moms</span>
+            <span class="legend-value"><strong id="fPieVatPct">–</strong><span id="fPieVatKr">–</span></span>
+        </div>
+        <div class="legend-row">
+            <span class="legend-dot net"></span>
+            <span class="legend-name">Netto</span>
+            <span class="legend-value"><strong id="fPieNetPct">–</strong><span id="fPieNetKr">–</span></span>
+        </div>
+    </div>
+</div>
+
 <div id="easterToast" class="easter-toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1331,6 +1425,25 @@
             dividendNote.textContent = "";
             dividendNote.classList.remove("show");
         }
+
+        // Update floating pie chart
+        const fPie = document.getElementById("floatingPieChart");
+        if (fPie) {
+            fPie.style.setProperty("--tax-end", `${taxEnd}%`);
+            fPie.style.setProperty("--vat-end", `${vatEnd}%`);
+        }
+        const fTaxPct = document.getElementById("fPieTaxPct");
+        if (fTaxPct) fTaxPct.textContent = `${pct1.format(taxShare)} %`;
+        const fTaxKr = document.getElementById("fPieTaxKr");
+        if (fTaxKr) fTaxKr.textContent = money(salaryTax);
+        const fVatPct = document.getElementById("fPieVatPct");
+        if (fVatPct) fVatPct.textContent = `${pct1.format(vatShare)} %`;
+        const fVatKr = document.getElementById("fPieVatKr");
+        if (fVatKr) fVatKr.textContent = money(salaryVat);
+        const fNetPct = document.getElementById("fPieNetPct");
+        if (fNetPct) fNetPct.textContent = `${pct1.format(netShare)} %`;
+        const fNetKr = document.getElementById("fPieNetKr");
+        if (fNetKr) fNetKr.textContent = money(net);
     }
 
     function updateStats() {
@@ -1426,6 +1539,25 @@
     }
 
     updateAll();
+
+    // Floating pie chart: show when income-chart scrolls out of view
+    const incomeChart = document.querySelector(".income-chart");
+    const floatingPie = document.getElementById("floatingPie");
+    if (incomeChart && floatingPie) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    floatingPie.classList.add("visible");
+                } else {
+                    floatingPie.classList.remove("visible");
+                }
+            });
+        }, {
+            threshold: 0,
+            rootMargin: "0px 0px 20% 0px"
+        });
+        observer.observe(incomeChart);
+    }
 </script>
 </body>
 </html>
