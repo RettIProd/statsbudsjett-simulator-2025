@@ -21,6 +21,59 @@
             --good-bg: #e0f3ec;
             --shadow: 0 10px 30px rgba(20, 33, 43, .07);
             --radius: 18px;
+            --bg-gradient: radial-gradient(circle at 10% -10%, #e7f4f0 0, transparent 30rem);
+            --input-bg: #fbfcfc;
+            --summary-bg: #f8fafb;
+            --subrow-bg: #fbfcfc;
+            --expand-bg: #f5f8f7;
+            --expand-border: #cfdad6;
+            --pill-bg: var(--accent-2);
+            --pill-color: #1f6b5b;
+            --eyebrow-bg: rgba(255, 255, 255, .7);
+            --eyebrow-border: #cfe3dd;
+            --eyebrow-color: #286c5e;
+            --btn-bg: #fff;
+            --btn-hover-border: #aebbc3;
+            --note-bg: #f7fbfa;
+            --note-border: #bfd3cc;
+            --other-parent-bg: linear-gradient(90deg, #fbfefd, #fff);
+            --subgroup-border: #d6e8e2;
+            --allocation-bg: #edf1f3;
+            --pct-bg: #f5f7f8;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f1921;
+            --panel: #1a2733;
+            --ink: #e4ecef;
+            --muted: #8a9ba6;
+            --line: #2a3d4a;
+            --accent: #3aafa9;
+            --accent-2: #1a3a38;
+            --danger: #e07068;
+            --danger-bg: #2d1a18;
+            --good: #5ec4a6;
+            --good-bg: #162e26;
+            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            --bg-gradient: radial-gradient(circle at 10% -10%, #162a2e 0, transparent 30rem);
+            --input-bg: #15222d;
+            --summary-bg: #15222d;
+            --subrow-bg: #15222d;
+            --expand-bg: #1a3038;
+            --expand-border: #2a4a52;
+            --pill-bg: var(--accent-2);
+            --pill-color: #5ec4a6;
+            --eyebrow-bg: rgba(26, 39, 51, .8);
+            --eyebrow-border: #2a4a52;
+            --eyebrow-color: #5ec4a6;
+            --btn-bg: #1a2733;
+            --btn-hover-border: #3a5a6a;
+            --note-bg: #15222d;
+            --note-border: #2a4a52;
+            --other-parent-bg: linear-gradient(90deg, #15222d, #1a2733);
+            --subgroup-border: #2a4a52;
+            --allocation-bg: #2a3d4a;
+            --pct-bg: #15222d;
         }
 
         * {
@@ -31,7 +84,7 @@
             margin: 0;
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--ink);
-            background: radial-gradient(circle at 10% -10%, #e7f4f0 0, transparent 30rem),
+            background: var(--bg-gradient),
             var(--bg);
             line-height: 1.45;
         }
@@ -51,12 +104,12 @@
             gap: 8px;
             align-items: center;
             padding: 7px 11px;
-            border: 1px solid #cfe3dd;
+            border: 1px solid var(--eyebrow-border);
             border-radius: 999px;
-            background: rgba(255, 255, 255, .7);
+            background: var(--eyebrow-bg);
             font-size: .78rem;
             font-weight: 750;
-            color: #286c5e;
+            color: var(--eyebrow-color);
             letter-spacing: .03em;
             text-transform: uppercase
         }
@@ -74,6 +127,24 @@
             color: var(--muted);
             max-width: 780px;
             margin: 0
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: var(--eyebrow-bg);
+            border: 1px solid var(--eyebrow-border);
+            border-radius: 999px;
+            padding: 7px 11px;
+            font-size: 1.15rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: background .2s ease, border-color .2s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--btn-hover-border);
         }
 
         .grid {
@@ -265,7 +336,7 @@
             margin-top: 7px;
             border: 1px solid var(--line);
             border-radius: 12px;
-            background: #fbfcfc;
+            background: var(--input-bg);
             display: flex;
             align-items: center;
             overflow: hidden
@@ -308,7 +379,7 @@
 
         button {
             border: 1px solid var(--line);
-            background: #fff;
+            background: var(--btn-bg);
             color: var(--ink);
             border-radius: 11px;
             padding: 10px 13px;
@@ -318,7 +389,7 @@
         }
 
         button:hover {
-            border-color: #aebbc3
+            border-color: var(--btn-hover-border)
         }
 
         .budget-summary {
@@ -329,7 +400,7 @@
         }
 
         .summary-box {
-            background: #f8fafb;
+            background: var(--summary-bg);
             border: 1px solid var(--line);
             border-radius: 14px;
             padding: 14px
@@ -369,8 +440,8 @@
         .budget-row {
             padding: 15px 16px;
             border: 1px solid var(--line);
+            background: var(--panel);
             border-radius: 15px;
-            background: #fff;
             display: grid;
             grid-template-columns:minmax(220px, 1.35fr) minmax(260px, 1fr) minmax(150px, .55fr);
             gap: 18px;
@@ -400,8 +471,8 @@
             place-items: center;
             font-size: 1rem;
             line-height: 1;
-            background: #f5f8f7;
-            border-color: #cfdad6;
+            background: var(--expand-bg);
+            border-color: var(--expand-border);
             color: var(--accent)
         }
 
@@ -415,21 +486,22 @@
         }
 
         .other-parent {
-            border-color: #bcd4cc;
-            background: linear-gradient(90deg, #fbfefd, #fff)
+            border-color: var(--note-border);
+            background: var(--other-parent-bg)
         }
 
         .subgroup {
             margin: -3px 0 4px 24px;
             padding: 6px 0 6px 15px;
-            border-left: 2px solid #d6e8e2;
+            border-left: 2px solid var(--subgroup-border);
             display: grid;
             gap: 8px
         }
 
         .budget-row.subrow {
             box-shadow: none;
-            background: #fbfcfc;
+            border: 1px solid var(--line);
+            background: var(--panel);
             border-radius: 13px;
             padding: 12px 14px;
             grid-template-columns:minmax(220px, 1.35fr) minmax(260px, 1fr) minmax(150px, .55fr)
@@ -451,9 +523,9 @@
         .reconstruction-note {
             margin: 0 0 2px;
             padding: 10px 12px;
-            border: 1px dashed #bfd3cc;
+            border: 1px dashed var(--note-border);
             border-radius: 12px;
-            background: #f7fbfa;
+            background: var(--note-bg);
             color: var(--muted);
             font-size: .76rem
         }
@@ -461,7 +533,7 @@
         .allocation {
             margin-top: 8px;
             height: 7px;
-            background: #edf1f3;
+            background: var(--allocation-bg);
             border-radius: 10px;
             overflow: hidden
         }
@@ -483,7 +555,7 @@
         .pct {
             font-variant-numeric: tabular-nums;
             text-align: right;
-            background: #f5f7f8;
+            background: var(--pct-bg);
             border: 1px solid var(--line);
             padding: 5px 7px;
             border-radius: 9px;
@@ -543,8 +615,8 @@
         }
 
         .pill {
-            background: var(--accent-2);
-            color: #1f6b5b;
+            background: var(--pill-bg);
+            color: var(--pill-color);
             padding: 5px 9px;
             border-radius: 999px;
             font-size: .75rem;
@@ -695,8 +767,9 @@
 </head>
 <body>
 <div class="wrap">
-    <header>
+    <header style="position:relative">
         <div class="eyebrow">Norge · Statsbudsjettet 2026</div>
+        <button id="themeToggle" class="theme-toggle" aria-label="Bytt tema">🌗</button>
         <h1>Hva går skatten din til?</h1>
         <p class="lede">Se hvordan skatten til en gjennomsnittlig lønnsmottaker fordeles på staten – og dra i
             budsjettpostene for å se hva høyere eller lavere pengebruk ville bety for din egen skattebelastning.</p>
@@ -1028,6 +1101,18 @@
         "Kultur, medier, frivillighet og likestilling": {
             0: "Ta den, Sosialister!",
             200: "Frivillighet er ikke frivillig!"
+        },
+        "Andre utgifter": {
+            0: "Andre utgifter, andre betaler",
+            200: "Sikkert viktig"
+        },
+        "Energi, strømstøtte, Langskip m.m.": {
+            0: "Gaia vil takke oss.",
+            200: "Vi sparer dette inn igjen på norgespris!"
+        },
+        "Samferdsel": {
+            0: "Trenger ikke veier når alle har hjemmekontor.",
+            200: "Lyntog til Nord-Norge! 🚄"
         }
     };
 
@@ -1557,6 +1642,28 @@
             rootMargin: "0px 0px 20% 0px"
         });
         observer.observe(incomeChart);
+    }
+
+    // Theme toggle
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            themeToggle.textContent = "☀️";
+        }
+        themeToggle.addEventListener("click", () => {
+            const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+            if (isDark) {
+                document.documentElement.removeAttribute("data-theme");
+                themeToggle.textContent = "🌗";
+                localStorage.setItem("theme", "light");
+            } else {
+                document.documentElement.setAttribute("data-theme", "dark");
+                themeToggle.textContent = "☀️";
+                localStorage.setItem("theme", "dark");
+            }
+        });
     }
 </script>
 </body>
